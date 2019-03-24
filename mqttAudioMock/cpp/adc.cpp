@@ -6,11 +6,12 @@
 Serial pc (USBTX, USBRX);
 
 AnalogIn mic(A0);
-
+// MAX9814 mic(A0);
 char ad_data_buf0[MAX_BUF_SIZE];
 char ad_data_buf1[MAX_BUF_SIZE];
 int i = 0;
 char buf_sel = 0;
+
 
 void adcTickfunc() {
     
@@ -23,8 +24,8 @@ void adcTickfunc() {
     
     ++i;
     
-    // 100usec delay
-    // wait(10);
+    // 100usec = 10kHz = 0.1ms 
+    wait_ms(0.1);
     
     pc.printf("\n\r pwm %d", ad_data_buf0[i]);
 
