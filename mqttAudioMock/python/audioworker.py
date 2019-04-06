@@ -8,7 +8,7 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
 CHUNK = 1024
-RECORD_SECONDS = 5
+RECORD_SECONDS = 10
 WAVE_OUTPUT_FILENAME = "file.wav"
 
 class audioworker (threading.Thread):
@@ -28,38 +28,36 @@ class audioworker (threading.Thread):
 		self.__isRun = False
 
 	def run(self):
-		audio = pyaudio.PyAudio()
-		stream = audio.open(format=pyaudio.paInt16, 
+
+		
+		while self.__isRun:
+			sender = mqttSender("Client1001")
+			sender.connect("52.141.36.28")
+			print ("recording...")
+			audio = pyaudio.PyAudio()
+			stream = audio.open(format=pyaudio.paInt16, 
 		                channels=CHANNELS, 
 		                rate=RATE, 
 		                input=True, 
 		                input_device_index=0,
 		                frames_per_buffer=CHUNK)
 
-		print ("recording...")
-		self.frames.clear()
-		sender = mqttSender("Client1000")
-		sender.connect("52.141.36.28")
-		for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
-		    data = stream.read(CHUNK)
-		    self.frames.append(data)
-				
-		self.save(audio)
-
-		with open(WAVE_OUTPUT_FILENAME, "rb") as output:
-			file = output.read()
-			byteArray2 = bytearray(file)
-			#print(byteArray2)
-
-			sender.publish("eslow/audi", byteArray2)
-			#sender.close()
+			self.frames.clear()
+			print ("clear")
+			for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+			    data = stream.read(CHUNK)
+			    self.frames.append(data)
+			self.save(audio)
+			print ("saved")
+			f = open(WAVE_OUTPUT_FILENAME, "rb")
+			imagestring = f.read()
+			f.close()
+			byteArray = bytearray(imagestring)
+			print ("sent")
+			sender.publish("eslow/audio", byteArray)
 			print ("finished recording")
-
-		stream.stop_stream()
-		stream.close()
-		audio.terminate()
-
-worker = audioworker()
-worker.start()
-input('wait')
-worker.stop()
+			sleep(1)
+			sender.close()
+			stream.stop_stream()
+			stream.close()
+			audio.terminate()
